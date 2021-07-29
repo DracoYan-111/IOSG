@@ -392,8 +392,8 @@
       ]
     },
     "E:\\Solidity\\IOSG\\contracts\\IosgNft.sol": {
-      "lastModificationDate": 1627529745458,
-      "contentHash": "37b2d4110707387b5be68f869bae8ec6",
+      "lastModificationDate": 1627529884197,
+      "contentHash": "d0174e950aa19fe995d059aa87c47edb",
       "sourceName": "contracts/IosgNft.sol",
       "solcConfig": {
         "version": "0.8.4",
@@ -537,8 +537,8 @@
       ]
     },
     "E:\\Solidity\\IOSG\\contracts\\IosgToken.sol": {
-      "lastModificationDate": 1627529613423,
-      "contentHash": "af3a46d961b90cf8d54d1123ef27abfa",
+      "lastModificationDate": 1627529993314,
+      "contentHash": "f8bebf03427b23a25c73cfd1baddbf77",
       "sourceName": "contracts/IosgToken.sol",
       "solcConfig": {
         "version": "0.8.4",
@@ -563,13 +563,50 @@
         }
       },
       "imports": [
-        "@openzeppelin/contracts/token/ERC20/ERC20.sol"
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+        "@openzeppelin/contracts/access/Ownable.sol"
       ],
       "versionPragmas": [
         "^0.8.4"
       ],
       "artifacts": [
         "IOSGToken"
+      ]
+    },
+    "E:\\Solidity\\IOSG\\node_modules\\@openzeppelin\\contracts\\access\\Ownable.sol": {
+      "lastModificationDate": 1627029813948,
+      "contentHash": "4fe56b59ced59d87df6b796758f62895",
+      "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Ownable"
       ]
     }
   }
