@@ -392,8 +392,8 @@
       ]
     },
     "E:\\Solidity\\IOSG\\contracts\\IosgNft.sol": {
-      "lastModificationDate": 1627529299941,
-      "contentHash": "61e5d25f2ab66f70f5da488925df8739",
+      "lastModificationDate": 1627529745458,
+      "contentHash": "37b2d4110707387b5be68f869bae8ec6",
       "sourceName": "contracts/IosgNft.sol",
       "solcConfig": {
         "version": "0.8.4",
