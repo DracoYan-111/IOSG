@@ -392,8 +392,8 @@
       ]
     },
     "E:\\Solidity\\IOSG\\contracts\\IosgNft.sol": {
-      "lastModificationDate": 1627529884197,
-      "contentHash": "d0174e950aa19fe995d059aa87c47edb",
+      "lastModificationDate": 1627530168435,
+      "contentHash": "6363a3645429c3563d1218a817470a0c",
       "sourceName": "contracts/IosgNft.sol",
       "solcConfig": {
         "version": "0.8.4",
@@ -419,7 +419,8 @@
       },
       "imports": [
         "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
-        "@openzeppelin/contracts/utils/Counters.sol"
+        "@openzeppelin/contracts/utils/Counters.sol",
+        "@openzeppelin/contracts/access/Ownable.sol"
       ],
       "versionPragmas": [
         "^0.8.4"

@@ -3,12 +3,13 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 /**
 * @title IOSG ERC721 token
 */
-contract IOSGNft is ERC721URIStorage {
+contract IOSGNft is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
@@ -22,18 +23,19 @@ contract IOSGNft is ERC721URIStorage {
 
     /**
     * @dev 创建nft
-    * @param player 收款人地址
-    * @param tokenURI tokenURI
+    * @param _player 收款人地址
+    * @param _tokenURI tokenURI
     */
-    function awardItem(address player, string memory tokenURI)
+    function awardItem(address _player, string memory _tokenURI)
     public
+    onlyOwner
     returns (uint256)
     {
         _tokenIds.increment();
 
         uint256 newItemId = _tokenIds.current();
-        _mint(player, newItemId);
-        _setTokenURI(newItemId, tokenURI);
+        _mint(_player, newItemId);
+        _setTokenURI(newItemId, _tokenURI);
 
         return newItemId;
     }
