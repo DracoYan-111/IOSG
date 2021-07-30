@@ -1,169 +1,177 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.6.6;
 
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
-import "@chainlink/contracts/src/v0.6/vendor/Ownable.sol";
+import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
 interface linkToken {
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
+    function balanceOf(address account) external returns (uint256);
 }
 
-contract twitterverify is ChainlinkClient, Ownable {
+/**
+* @title IOSG 随机数合约
+*/
+contract RandomNumberConsumer is VRFConsumerBase {
+    bytes32  _requestId;
+    bytes32 internal keyHash;
+    uint256 internal fee;
+
+    uint256 public randomResult;
+
+    constructor(address VRFCoordinator, address LINKToken, bytes32 _keyHash)
+    VRFConsumerBase(
+        VRFCoordinator, //Kovan VRF Coordinator 0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9
+        LINKToken    // Kovan LINK Token 0xa36085F69e2889c224210F603D836748e7dC0088
+    ) public
+    {
+        keyHash = _keyHash;
+        //0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4;
+
+        fee = 0.1 * 10 ** 18;
+    }
+
+    /**
+    * @dev 获取随机数
+    * @param 随机性
+    */
+    function getRandomNumber(uint256 randomness) public returns (bytes32 requestId) {
+        require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
+        fulfillRandomness(requestRandomness(keyHash, fee), randomness);
+        return requestRandomness(keyHash, fee);
+    }
+
+    /**
+    * @dev 回调函数
+    * @param requestId 请求ID
+    * @param randomness 随机性
+    */
+    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        _requestId = requestId;
+        randomResult = (randomness % 50) + 1;
+    }
+
+    /**
+    * @dev 获得随机结果
+    * @return 随机数结果
+    */
+    function getRandomResult() public view returns (uint256){
+        return randomResult;
+    }
+}
+
+
+/**
+* @title IOSG 推特验证
+*/
+contract twitterVerify is ChainlinkClient {
     address private oracle;
+    bytes32 private jobId;
     uint256 private fee;
-    bytes32 private verifyUserJobId;
+    RandomNumberConsumer randomNumberConsumer;
+    linkToken public link;
 
-    struct userVerification {
+    struct userTwitter {
         bytes32 requestId;
+        string twitterId;
+        string retweetId;
         bool verified;
-        string twitterHandle;
     }
 
-    mapping(address => userVerification) public verificationMap;
+    mapping(address => userTwitter) public userTwitterMap;
 
     /**
-     * @dev emitted when verifyUser is called
-     * @param requestId the requestId associated with the verification job
-     * @param twitterHandle the twitter handle the user is attempting to verify ownership of
-     * @param user the address of the caller
-     **/
-    event AttemptToVerify(
-        bytes32 requestId,
-        string twitterHandle,
-        address user
-    );
-
-    /**
-     * @dev emitted when a successful verification occurs
-     * @param requestId the requestId associated with the successful verification job
-     * @param twitterHandle the twitter handle the user has verified ownership of
-     * @param user the address that owns the aforementioned twitter handle
-     **/
-    event VerificationSuccess(
-        bytes32 requestId,
-        string twitterHandle,
-        address user
-    );
-
-    /**
-     * @dev emitted when a verification fails
-     * @param requestId the requestId associated with the failing verification job
-     **/
-    event VerificationFailed(bytes32 requestId);
-
-    address public LINK_CONTRACT_ADDRESS =
-    0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
-    linkToken link = linkToken(LINK_CONTRACT_ADDRESS);
-
-    constructor() public {
-        //setPublicChainlinkToken();
-        setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
-        oracle = 0x0e70fe151Fa8A1477D4E2a42028DB8a231D2C827;
-        // oracle address
-        verifyUserJobId = "9ddae3a5bd6547d590eb5ccaeab1429e";
-        //job id
+    * @dev 合约部署
+    * @param _link link地址
+    * @param _randomNumberConsumer 随机数合约地址
+    **/
+    constructor(linkToken _link, RandomNumberConsumer _randomNumberConsumer) public {
+        randomNumberConsumer = _randomNumberConsumer;
+        link = _link;
+        setPublicChainlinkToken();
+        oracle = 0xa04803C3cbd890083D668e7fc3cE44863ff9df31;
+        jobId = "0c02ce5432944c3fbf0f8f7eca6ae8b8";
         fee = 1 * 10 ** 17;
-        // 0.1 LINK
-    }
-
-    function setJobId(bytes32 _jobId) external onlyOwner {
-        verifyUserJobId = _jobId;
     }
 
     /**
-     * @dev allows owner to create test users for contract testing.
-     * Test users will always have the twitter handle ***TEST_USER*** so that
-     * they are easily recognizable as a test user
-     **/
-    function createTestUser(address _address) external onlyOwner {
-        userVerification memory testUser =
-        userVerification({
+    * @dev 前端测试数据
+    * @param _address 用户地址
+    */
+    function createTestUser(address _address) external {
+        randomNumberConsumer.getRandomNumber(uint256(_address));
+        bool test = 10 > randomNumberConsumer.getRandomResult();
+        userTwitter memory testUser =
+        userTwitter({
         requestId : 0,
-        verified : true,
-        twitterHandle : "***TEST_USER***"
+        twitterId : "testUser",
+        retweetId : "testTwitter",
+        verified : test
         });
-        verificationMap[_address] = testUser;
-        emit VerificationSuccess(
-            testUser.requestId,
-            testUser.twitterHandle,
-            _address
-        );
+        userTwitterMap[_address] = testUser;
     }
 
+
     /**
-     * @dev submit a verification job to the oracle. Users latest tweet must contain
-     * the address they called this function with!!!
+     * @dev 验证用户
+     * @param _twitterId 用户推特Id
+     * @param _retweetId 推文ID
      **/
-    function verifyUser(string memory _userHandle) public returns (bytes32) {
+    function verifyUser(string memory _retweeted, string memory _twitterId, string memory _retweetId) public returns (bytes32) {
         require(
-            link.transferFrom(msg.sender, address(this), fee),
-            "transferFrom failed"
+            link.balanceOf(address(this)) > fee,
+            "Please recharge LINK in the contract"
         );
-        verificationMap[msg.sender].verified = false;
-        verificationMap[msg.sender].twitterHandle = _userHandle;
+        userTwitterMap[msg.sender].verified = false;
+        userTwitterMap[msg.sender].twitterId = _twitterId;
+        userTwitterMap[msg.sender].retweetId = _retweetId;
         Chainlink.Request memory req =
         buildChainlinkRequest(
-            verifyUserJobId,
+            jobId,
             address(this),
             this.fulfill_verify.selector
         );
-        req.add("handle", _userHandle);
+        req.add("retweeted", _retweeted);
         bytes32 Id = sendChainlinkRequestTo(oracle, req, fee);
-        verificationMap[msg.sender].requestId = Id;
-        emit AttemptToVerify(Id, _userHandle, msg.sender);
+        userTwitterMap[msg.sender].requestId = Id;
         return Id;
     }
 
     /**
-     * @dev Called by the oracle once the verification job is complete
-     **/
+    * @dev 完成验证
+    * @param _requestId 请求ID
+    * @param _address 用户地址
+    */
     function fulfill_verify(bytes32 _requestId, uint256 _address)
     public
     recordChainlinkFulfillment(_requestId)
     {
         address user = address(_address);
         if (user == address(0)) {
-            emit VerificationFailed(_requestId);
             revert("Error occurred during verification!");
         }
-        if (verificationMap[user].requestId == _requestId) {
-            verificationMap[user].verified = true;
-            emit VerificationSuccess(
-                _requestId,
-                verificationMap[user].twitterHandle,
-                user
-            );
+        if (userTwitterMap[user].requestId == _requestId) {
+            userTwitterMap[user].verified = true;
         }
     }
 
+    /**
+    * @dev 得到验证
+    * @param _address 用户地址
+    */
     function getVerification(address _address) external view returns (bool) {
-        return verificationMap[_address].verified;
+        return userTwitterMap[_address].verified;
     }
 
-    function getTwitterHandle(address _address)
+    /**
+    * @dev 获取推特
+    * @param _address 用户地址
+    */
+    function getTwitter(address _address)
     external
     view
-    returns (string memory)
+    returns (string memory, string memory)
     {
-        return verificationMap[_address].twitterHandle;
+        return (userTwitterMap[_address].twitterId,
+        userTwitterMap[_address].retweetId);
     }
-}
-
-{
-"initiators" : [
-{"type" : "runLog",
-"params" : {"address" : "0xa04803C3cbd890083D668e7fc3cE44863ff9df31"}
-}
-],
-"tasks" : [
-{"type" : "openWeather"},
-{"type" : "copy" ,
-    "params" : {"copyPath" : ["details", "current"]}},,
-{"type" : "ethbytes32"},
-{"type" : "ethtx"}
-]
 }
