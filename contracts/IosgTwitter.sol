@@ -152,3 +152,18 @@ contract twitterverify is ChainlinkClient, Ownable {
         return verificationMap[_address].twitterHandle;
     }
 }
+
+{
+"initiators" : [
+{"type" : "runLog",
+"params" : {"address" : "0xa04803C3cbd890083D668e7fc3cE44863ff9df31"}
+}
+],
+"tasks" : [
+{"type" : "openWeather"},
+{"type" : "copy" ,
+    "params" : {"copyPath" : ["details", "current"]}},,
+{"type" : "ethbytes32"},
+{"type" : "ethtx"}
+]
+}

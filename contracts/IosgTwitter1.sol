@@ -37,11 +37,28 @@ contract twitterverify is ChainlinkClient {
     }
 
     /**
+    * @dev 前端测试数据
+    * @param _address 用户地址
+    */
+    function createTestUser(address _address) external {
+        bool test = true;
+        userTwitter memory testUser =
+        userTwitter({
+        requestId : 0,
+        twitterId : "testUser",
+        retweetId : "testTwitter",
+        verified : true
+        });
+        userTwitterMap[_address] = testUser;
+    }
+
+
+    /**
      * @dev 验证用户
      * @param _twitterId 用户推特Id
      * @param _retweetId 推文ID
      **/
-    function verifyUser(string memory _twitterId, string memory _retweetId) public returns (bytes32) {
+    function verifyUser(string memory _retweeted, string memory _twitterId, string memory _retweetId) public returns (bytes32) {
         require(
             link.balanceOf(address(this)) > fee,
             "Please recharge LINK in the contract"
@@ -55,8 +72,7 @@ contract twitterverify is ChainlinkClient {
             address(this),
             this.fulfill_verify.selector
         );
-        req.add("twitterId", _twitterId);
-        req.add("retweetId", _retweetId);
+        req.add("retweeted", _retweeted);
         bytes32 Id = sendChainlinkRequestTo(oracle, req, fee);
         userTwitterMap[msg.sender].requestId = Id;
         return Id;
@@ -100,4 +116,6 @@ contract twitterverify is ChainlinkClient {
         return (userTwitterMap[_address].twitterId,
         userTwitterMap[_address].retweetId);
     }
+
+
 }
